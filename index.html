@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyber Traffic Rule – PRO Demo</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    color:white;
+    text-align:center;
+    min-height:100vh;
+    background:url('https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size:cover;
+    overflow-x:hidden;
+}
+.overlay{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(11,19,43,0.6);
+    animation: pulse 3s infinite;
+    z-index:-1;
+}
+@keyframes pulse{
+    0%{background: rgba(11,19,43,0.4);}
+    50%{background: rgba(11,19,43,0.6);}
+    100%{background: rgba(11,19,43,0.4);}
+}
+h1{text-shadow:2px 2px 5px black; margin-top:25px;}
+p{text-shadow:1px 1px 3px black; opacity:0.9;}
+input{
+    width:70%;
+    padding:12px;
+    font-size:16px;
+    border-radius:6px;
+    border:none;
+    outline:none;
+}
+button{
+    padding:12px 25px;
+    font-size:16px;
+    margin-top:15px;
+    cursor:pointer;
+    border-radius:6px;
+    border:none;
+    background:#4c5c68;
+    color:white;
+    box-shadow: 1px 1px 5px black;
+}
+button:hover{
+    background:#627ba1;
+}
+.light{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    margin:25px auto;
+    background:gray;
+    box-shadow:0 0 20px black;
+    opacity:1;
+    transition: opacity 0.3s ease;
+}
+.green{background:lime; box-shadow:0 0 25px lime;}
+.yellow{background:yellow; box-shadow:0 0 25px yellow;}
+.red{background:red; box-shadow:0 0 25px red;}
+.box{font-size:18px; margin-top:10px; background: rgba(0,0,0,0.4); padding:10px; border-radius:8px;}
+.risk-bar{
+    width:70%;
+    height:25px;
+    background:rgba(0,0,0,0.4);
+    margin:20px auto;
+    border-radius:12px;
+    overflow:hidden;
+}
+.risk-fill{
+    height:100%;
+    width:0%;
+    background:lime;
+    text-align:center;
+    line-height:25px;
+    color:black;
+    font-weight:bold;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+</style>
+
+<script>
+// 🔊 Sound function
+let audioCtx;
+function dangerBeep(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.connect(audioCtx.destination);
+    osc.start();
+    setTimeout(()=>osc.stop(),400);
+}
+
+// 🔹 Main link check
+function checkLink(){
+    const link=document.getElementById("link").value.toLowerCase();
+    const light=document.getElementById("light");
+    const result=document.getElementById("result");
+    const fill=document.getElementById("fill");
+
+    light.className="light"; // reset
+    fill.style.width="0%";
+    fill.style.background="lime";
+
+    let status="SAFE", risk=10, reason="Normal link";
+
+    // 🔴 Dangerous
+    if(
+        link.startsWith("http://") ||
+        link.includes("@") ||
+        /\d+\.\d+\.\d+\.\d+/.test(link) ||
+        ["login","otp","bank","verify","password","account"].some(w=>link.includes(w))
+    ){
+        light.classList.add("red");
+        status="DANGER"; risk=90; reason="Phishing pattern detected";
+        dangerBeep(); // sound
+
+        // Blink + pulsate effect
+        let blink=0;
+        const interval=setInterval(()=>{
+            light.style.opacity=(light.style.opacity==0?1:0.3);
+            blink++;
+            if(blink>6){
+                clearInterval(interval);
+                light.style.opacity=1;
+            }
+        },300);
+    }
+    // 🟡 Suspicious
+    else if(
+        ["bit.ly","tinyurl","t.co"].some(s=>link.includes(s)) ||
+        link.length>70
+    ){
+        light.classList.add("yellow");
+        status="SUSPICIOUS"; risk=55; reason="Shortened or long link";
+    }
+    // 🟢 Safe
+    else{
+        light.classList.add("green");
+    }
+
+    result.innerHTML=`Status: ${status} <br>Risk: ${risk}% <br>Reason: ${reason}`;
+
+    // Animate risk bar
+    fill.style.width=risk+"%";
+    if(risk<=30) fill.style.background="lime";
+    else if(risk<=60) fill.style.background="yellow";
+    else fill.style.background="red";
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="overlay"></div>
+
+<h1>🚦 Cyber Traffic Rule – PRO Demo</h1>
+<p>Paste any link from WhatsApp / SMS / Email / Social Media</p>
+
+<input id="link" placeholder="Paste link here">
+<br>
+<button onclick="checkLink()">Check Link</button>
+
+<div id="light" class="light"></div>
+
+<div class="risk-bar">
+    <div id="fill" class="risk-fill">0%</div>
+</div>
+
+<div id="result" class="box"></div>
+
+</body>
+</html>
